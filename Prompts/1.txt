@@ -1,0 +1,83 @@
+We'll stay as a website currently.
+
+Build a new Fake International Bank - FINB Platinum
+
+This is a brand-new version: Platinum
+
+
+
+
+
+
+
+Have a best UI, UX, and most importantly Design. The current design is not bad but it should showcase a game simulation with no tension. A fresh vibes platform of trade. Have a Platinum like vibes and design. You can have bluish, shiny, and many more platinum characteristics to showcase platinum.
+
+
+
+It should be very safe and secure.
+
+
+
+Registration of a new account must not require an Activation Code now. Everyone is free to register. Users can register by creating a unique username (like finbplatinum/@elonmusk_tesla12 or finbplatinum/@billgates, etc), Name, Creating a Password. Then after the registration, the users get their unique card registered on their username. The card includes a Card Number, CVV, Expiry Date, Holder's Name. However, the card should have zero balance. Users can get free 100Credits balance by linking their google account.
+
+
+
+The environment after login should be very simple, fresh, fun, and very very interesting. The users should want to spend time on this game.
+
+
+
+There users can transfer funds by entering Receiver's Card Number or username (on entering username the card number automatically appears).
+
+
+
+There should be an option to create contacts. Users can create contacts so that they can easily send funds without needing to type username or card number repeatedly. The users can even request credits from their contacts (friends). Since it is a game, you may use 'friends' instead of 'contacts'.
+
+
+
+There should be all the functions and features.
+
+
+
+There should be many many fun games. The user should have fun and should be kept busy in the website game simulation.
+
+
+
+There should be many ways to earn credits. More the user spends time on FINB, more the user can earn. There should be many many interactive games to keep users engaged.
+
+
+
+There should be automatic changes in the stock values and others, it should not be manual.
+
+
+
+Now, this should be the main Firebase:
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyB0URNB2fpwM9FOwVbX7zjtbXr6uRgnKqI",
+    authDomain: "finbplatinum.firebaseapp.com",
+    projectId: "finbplatinum",
+    storageBucket: "finbplatinum.firebasestorage.app",
+    messagingSenderId: "829316154126",
+    appId: "1:829316154126:web:ea7d699340a0552df88d5f",
+    measurementId: "G-JCHHHJEQ2C"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
+Fake International Bank
+
+Online Version: FINB Platinum
+
+Estd 2023
