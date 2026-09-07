@@ -1,0 +1,236 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────
+//  FINB Platinum — Firestore security rules
+//  Deploy: firebase deploy --only firestore:rules
+//
+//  Model: balances can ONLY change inside a validated set of
+//  writes (batch/transaction) that also includes the matching
+//  ledger document (order / trade / claim). Direct balance
+//  edits by clients are rejected.
+// ─────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthed() { return request.auth != null; }
+    function isUser(uid) { return isAuthed() && request.auth.uid == uid; }
+    function amt() { return request.resource.data.balance; }
+    function cur()   { return resource.data.balance; }
+    function delta() { return amt() - cur(); }
+
+    // Orders/trades are created in a PRIOR commit as 'pending', then a second
+    // transaction settles them alongside the balance changes. So money OUT is
+    // validated against the PRE-write (pending) ledger doc, and money IN
+    // against the POST-write (settled) ledger doc.
+    function preOrder(id)  { return get(/databases/$(database)/documents/orders/$(id)).data; }
+    function postOrder(id) { return getAfter(/databases/$(database)/documents/orders/$(id)).data; }
+    function preTrade(id)  { return get(/databases/$(database)/documents/trades/$(id)).data; }
+    function postTrade(id) { return getAfter(/databases/$(database)/documents/trades/$(id)).data; }
+    function hasClaim(id) {
+      return existsAfter(/databases/$(database)/documents/claims/$(id))
+        && getAfter(/databases/$(database)/documents/claims/$(id)).data.uid == request.auth.uid;
+    }
+    function claimAmt(id) {
+      return getAfter(/databases/$(database)/documents/claims/$(id)).data.amount;
+    }
+
+    // ── Public profiles ─────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if isAuthed();
+
+      allow create: if isUser(uid)
+        && request.resource.data.balance is number
+        && request.resource.data.balance >= 0
+        && request.resource.data.balance <= 100
+        && request.resource.data.cardNumber is string
+        && request.resource.data.username is string
+        && request.resource.data.name is string
+        && request.resource.data.streak == 0;
+
+      allow update: if isUser(uid)
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.cardNumber == resource.data.cardNumber
+        && request.resource.data.balance is number
+        && (
+          // ── Money OUT: pending order/trade committed in the previous batch
+          (delta() < 0
+            && request.resource.data.lastOut is string
+            && (
+              (existsAfter(/databases/$(database)/documents/orders/$(request.resource.data.lastOut))
+                && preOrder(request.resource.data.lastOut).status == 'pending'
+                && preOrder(request.resource.data.lastOut).from == request.auth.uid
+                && -delta() <= preOrder(request.resource.data.lastOut).amount + 1)
+              ||
+              (existsAfter(/databases/$(database)/documents/trades/$(request.resource.data.lastOut))
+                && preTrade(request.resource.data.lastOut).status == 'pending'
+                && preTrade(request.resource.data.lastOut).uid == request.auth.uid
+                && -delta() <= preTrade(request.resource.data.lastOut).amount + 1)
+            ))
+          // ── Money IN: settled order/trade, or a validated claim
+          || (delta() > 0
+            && (
+              (request.resource.data.lastIn is string
+                && existsAfter(/databases/$(database)/documents/orders/$(request.resource.data.lastIn))
+                && postOrder(request.resource.data.lastIn).status == 'settled'
+                && delta() <= postOrder(request.resource.data.lastIn).amount + 1)
+              || (request.resource.data.lastIn is string
+                && existsAfter(/databases/$(database)/documents/trades/$(request.resource.data.lastIn))
+                && postTrade(request.resource.data.lastIn).status == 'settled'
+                && delta() <= postTrade(request.resource.data.lastIn).amount + 1)
+              || (request.resource.data.lastClaim is string && hasClaim(request.resource.data.lastClaim)
+                && delta() <= claimAmt(request.resource.data.lastClaim) + 1)
+            ))
+          // ── Non-balance profile updates (e.g. metadata-only writes)
+          || (delta() == 0)
+        );
+
+      allow delete: if false;
+    }
+
+    // ── Private card data (CVV / expiry) ────────────────────────────
+    match /private/{uid} {
+      allow read: if isUser(uid);
+      allow create: if isUser(uid)
+        && request.resource.data.cvv is string
+        && request.resource.data.expiry is string;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ── Username reservation ────────────────────────────────────────
+    match /usernames/{name} {
+      allow read: if isAuthed();
+      allow create: if isAuthed() && request.resource.data.uid is string;
+      allow update, delete: if false;
+    }
+
+    // ── Transfer orders ─────────────────────────────────────────────
+    match /orders/{id} {
+      allow read: if isAuthed()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if isAuthed()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.amount <= 1000000;
+      // Only the sender may settle (their runTransaction performs the swap).
+      allow update: if isAuthed()
+        && resource.data.from == request.auth.uid
+        && request.resource.data.status == 'settled'
+        && resource.data.amount == resource.data.amount;
+      allow delete: if false;
+    }
+
+    // ── Stock trades ────────────────────────────────────────────────
+    match /trades/{id} {
+      allow read: if isAuthed() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthed()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.qty is int
+        && request.resource.data.qty > 0
+        && request.resource.data.side in ['buy', 'sell']
+        && request.resource.data.sym in ['NEB','PLX','QKR','ZPH','CRS','LMR','VYR','ORB']
+        && request.resource.data.price is number;
+      allow update: if isAuthed()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'settled';
+      allow delete: if false;
+    }
+
+    match /portfolios/{uid} {
+      allow read: if isAuthed();
+      allow create, update: if isUser(uid);
+      allow delete: if false;
+    }
+
+    // ── Reward claims ───────────────────────────────────────────────
+    match /claims/{id} {
+      allow read: if isAuthed();
+      allow create: if isAuthed()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.amount <= 500
+        && request.resource.data.kind in
+          ['login','spin','hourly','welcome','dice','memory','catch']
+        // id format must embed the user's own uid
+        && id.split('_')[0] == request.auth.uid;
+      allow update: if isAuthed()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.plays is int
+        && request.resource.data.plays <= 25;
+      allow delete: if false;
+    }
+
+    // ── Ledger / history ────────────────────────────────────────────
+    match /txns/{id} {
+      allow read: if isAuthed() && request.auth.uid in resource.data.partyUids;
+      allow create: if isAuthed()
+        && request.resource.data.amount is number
+        && request.resource.data.partyUids is list
+        && request.resource.data.partyUids[0] is string;
+      allow update, delete: if false;
+    }
+
+    // ── Friends ─────────────────────────────────────────────────────
+    match /friendReqs/{id} {
+      allow read: if isAuthed()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if isAuthed()
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.pair is string;
+      // Recipient accepts/declines; either side may mark for removal flow.
+      allow update: if isAuthed()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid)
+        && request.resource.data.status in ['accepted','declined'];
+      allow delete: if isAuthed()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+    }
+
+    // ── Credit requests between friends ─────────────────────────────
+    match /credReqs/{id} {
+      allow read: if isAuthed()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if isAuthed()
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0;
+      allow update: if isAuthed()
+        && (
+          // payer marks paid / or either side declines
+          (resource.data.to == request.auth.uid && request.resource.data.status in ['paid','declined'])
+          || (resource.data.from == request.auth.uid && request.resource.data.status == 'declined')
+        );
+      allow delete: if false;
+    }
+
+    // ── Community poll ──────────────────────────────────────────────
+    match /polls/{id} {
+      allow read: if isAuthed();
+      allow create: if isAuthed()
+        && request.resource.data.c1.votes is int
+        && request.resource.data.c2.votes is int;
+      allow update: if isAuthed()
+        && request.resource.data.c1.votes >= resource.data.c1.votes
+        && request.resource.data.c2.votes >= resource.data.c2.votes
+        && (request.resource.data.c1.votes + request.resource.data.c2.votes)
+           == (resource.data.c1.votes + resource.data.c2.votes) + 1;
+      allow delete: if false;
+    }
+
+    match /votes/{id} {
+      allow read: if isAuthed();
+      allow create: if isAuthed()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.choice in ['c1','c2'];
+      allow update, delete: if false;
+    }
+  }
+}

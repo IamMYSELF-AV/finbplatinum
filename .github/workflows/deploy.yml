@@ -1,0 +1,57 @@
+name: Deploy to Firebase
+
+# Live deploy on merge to main; a shareable preview channel on every PR.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write   # lets the action post the preview URL as a PR comment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Security rules are deployed only from the protected main branch.
+      - name: Deploy Firestore security rules (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-sa.json
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINBPLATINUM }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx -y firebase-tools@13 deploy --only firestore:rules \
+            --project finbplatinum --non-interactive
+
+      - name: Deploy to live channel (main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINBPLATINUM }}'
+          channelId: live
+          projectId: finbplatinum
+
+      - name: Deploy preview channel (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINBPLATINUM }}'
+          projectId: finbplatinum
