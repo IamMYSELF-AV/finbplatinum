@@ -72,6 +72,37 @@ firebase deploy --only hosting
 
 The repo also includes `public/_redirects` for Netlify-style static hosts.
 
+## Automatic deploys via GitHub Actions
+
+Two workflows ship in `.github/workflows/`:
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci.yml` | every push / PR | `npm ci && npm run build`, uploads the `dist/` artifact (no secrets needed) |
+| `deploy.yml` | push to `main` | builds, deploys **Firestore rules**, then deploys Hosting to the **live** channel |
+| `deploy.yml` | pull request | builds and deploys a **preview Hosting channel** — the action posts the preview URL as a PR comment |
+
+### One-time setup (needs repo owner)
+
+1. In the Firebase Console for **finbplatinum**:
+   **Project settings → Service accounts → Generate new private key** → downloads a JSON file.
+2. In GitHub: **repo → Settings → Secrets and variables → Actions → New repository secret**:
+   - Name: `FIREBASE_SERVICE_ACCOUNT_FINBPLATINUM`
+   - Value: paste the entire JSON file contents
+3. Ensure the service account has the **Firebase Hosting Admin** and
+   **Cloud Datastore Owner** (for rules deploy) roles (the default service account does).
+4. Enable the **Firebase Hosting API** and **Cloud Resource Manager API** in Google Cloud
+   (hosting deploys require them).
+5. Merge the PR — the first live deploy happens automatically; subsequent PRs get
+   preview links.
+
+Manual deploys still work as before:
+
+```bash
+firebase deploy --only firestore:rules
+npm run build && firebase deploy --only hosting
+```
+
 ## Project layout
 
 ```
