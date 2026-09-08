@@ -40,7 +40,10 @@ export default function Dashboard() {
     <div>
       <div className="hero-banner">
         <h2>Welcome back, {profile.name.split(' ')[0]} ✨</h2>
-        <p>Your Platinum account is ready. Trade the markets, spin the wheel, play games and grow your credits — fresh vibes, zero tension.</p>
+        <p>
+          Your Designer Gold account is live. Trade the markets, spin the wheel, play arcade games
+          and grow your credits — liquid gold vibes, zero tension.
+        </p>
         <div className="row mt">
           {dailyReady ? (
             <button className="btn primary" onClick={claimDaily} disabled={busy}>

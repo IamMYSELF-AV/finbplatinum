@@ -47,6 +47,7 @@ export function Sparkline({ data, up, width = 120, height = 44 }) {
     .map((v, i) => `${(i / (data.length - 1)) * width},${height - ((v - min) / span) * (height - 6) - 3}`)
     .join(' ');
   const color = up ? '#4ade80' : '#fb7185';
+
   const id = React.useId();
   return (
     <svg className="spark" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
@@ -68,7 +69,7 @@ export function BankCard({ profile, privateData, balance }) {
     <div className="bankcard">
       <div className="bc-top">
         <div>
-          <div className="bc-brand">FINB PLATINUM</div>
+          <div className="bc-brand">FINB · DESIGNER GOLD</div>
           <div className="bc-label" style={{ marginTop: 4 }}>Fake International Bank · Estd 2023</div>
         </div>
         <div className="bc-chip" />

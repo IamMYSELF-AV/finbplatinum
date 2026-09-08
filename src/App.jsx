@@ -35,7 +35,7 @@ function Shell({ user, profile }) {
           <div className="brand-mark">F</div>
           <div>
             <h1 style={{ fontSize: 16, lineHeight: 1.1 }}>FINB Platinum</h1>
-            <div className="faint" style={{ fontSize: 11 }}>@{profile?.username}</div>
+            <div className="faint" style={{ fontSize: 11 }}>Designer Gold · @{profile?.username}</div>
           </div>
           <div className="balance-pill">◈ {Number(profile?.balance ?? 0).toLocaleString()}</div>
           <div className="avatar" title={profile?.name}>{initial}</div>
