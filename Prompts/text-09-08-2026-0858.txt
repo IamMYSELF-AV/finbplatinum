@@ -1,0 +1,36 @@
+﻿I checked it. I am not satisfied at all. There is no Fun Design, Fun, UI, Fun UX.
+
+Yes it should have Platinum and Metal touch but it should not look AIish.
+
+Look at the designs in this repo:
+
+https://github.com/IamMYSELF-AV/designergold
+
+Also, make sure everything works. By yourself, create many cards and more. The card numbers should be unique and easy to remember and should contain letters and numbers both for safety. The users have option to choose the last 4 digits of their card.
+
+Good design but it should be in Platinum theme. This is the Platinum version of Fake International Bank.
+
+
+
+All data in Firebase.
+
+
+
+100% safe and secure. Legally protected.
+
+
+
+Premium, Professional, Fun
+
+
+
+Make sure everything works.
+
+
+
+Have many many fun games to keep users engaged and make them have a lot of fun. Add multiplayer games also so that they can play with their friends.
+
+
+
+The stock market, and everything should be automatic, live. It should work in real mechanism like rise in price in high demand.
+
