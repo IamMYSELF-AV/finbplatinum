@@ -75,85 +75,143 @@ export default function Auth({ needsProfile }) {
     }
   };
 
+  const headline =
+    mode === 'finish' ? 'Almost there'
+    : mode === 'signup' ? 'Create account'
+    : 'Welcome back';
+
+  const subline =
+    mode === 'finish' ? 'Pick a unique handle and claim your gold card.'
+    : mode === 'signup' ? 'Open a free Platinum account in seconds.'
+    : 'Sign in to your Fake International Bank.';
+
   return (
     <div className="auth-wrap">
-      <div className="card auth-card">
-        <div className="brand">
-          <div className="brand-mark">F</div>
+      <div className="auth-stage">
+        <aside className="auth-hero">
           <div>
-            <h1>Fake International Bank</h1>
-            <div className="sub">FINB Platinum · Online · Estd 2023</div>
-          </div>
-        </div>
-
-        {needsProfile || mode === 'finish' ? (
-          <>
-            <p className="muted center mt" style={{ fontSize: 14 }}>
-              Choose your unique handle to finish setting up your Platinum account.
+            <div className="auth-hero-badge">◈ FINB · Designer Gold</div>
+            <h2>Bank like a legend. Play like a pro.</h2>
+            <p>
+              Trade live markets, spin for free credits, and flash a liquid-gold card —
+              all inside a zero-stress game bank.
             </p>
-            <form onSubmit={submit} className="mt">
-              <div className="field">
-                <label>Username</label>
-                <div className="input-prefix">
-                  <span className="pre">@</span>
-                  <input className="input" placeholder="elonmusk_tesla12" value={form.username}
-                    onChange={set('username')} autoCapitalize="none" autoFocus />
-                </div>
+            <div className="auth-hero-stats">
+              <div className="auth-hero-stat">
+                <b>◈100</b>
+                <span>Google bonus</span>
               </div>
-              <div className="field">
-                <label>Your name</label>
-                <input className="input" placeholder="Elon Musk" value={form.name} onChange={set('name')} />
+              <div className="auth-hero-stat">
+                <b>8</b>
+                <span>Live stocks</span>
               </div>
-              <button className="btn primary block" disabled={busy}>
-                {busy ? 'Creating…' : 'Claim my card & 100 credits'}
-              </button>
-            </form>
-          </>
-        ) : (
-          <>
-            <div className="auth-tabs">
-              <button className={mode === 'signin' ? 'active' : ''} onClick={() => setMode('signin')}>Log in</button>
-              <button className={mode === 'signup' ? 'active' : ''} onClick={() => setMode('signup')}>Create account</button>
+              <div className="auth-hero-stat">
+                <b>4</b>
+                <span>Arcade games</span>
+              </div>
+            </div>
+          </div>
+          <div className="auth-hero-art" aria-hidden="true" />
+          <p className="faint" style={{ fontSize: 12, marginTop: 24 }}>
+            Credits are game-only · no real money · est. 2023
+          </p>
+        </aside>
+
+        <div className="auth-panel">
+          <div className="auth-card">
+            <div className="brand">
+              <div className="brand-mark">F</div>
+              <div>
+                <h1>Fake International Bank</h1>
+                <div className="sub">FINB Platinum · Online</div>
+              </div>
             </div>
 
-            <button className="google-btn" onClick={google} disabled={busy}>
-              <GoogleIcon /> Continue with Google
-            </button>
-            <div className="divider">or {mode === 'signin' ? 'log in' : 'register'} with a username</div>
+            <h2 style={{ fontSize: 26, marginTop: 18, marginBottom: 6 }}>{headline}</h2>
+            <p className="muted" style={{ fontSize: 14, marginBottom: 4 }}>{subline}</p>
 
-            <form onSubmit={submit}>
-              {mode === 'signup' && (
-                <div className="field">
-                  <label>Your name</label>
-                  <input className="input" placeholder="Bill Gates" value={form.name} onChange={set('name')} />
+            {needsProfile || mode === 'finish' ? (
+              <>
+                <form onSubmit={submit} className="mt">
+                  <div className="field">
+                    <label>Username</label>
+                    <div className="input-prefix">
+                      <span className="pre">@</span>
+                      <input className="input" placeholder="elonmusk_tesla12" value={form.username}
+                        onChange={set('username')} autoCapitalize="none" autoFocus />
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label>Your name</label>
+                    <input className="input" placeholder="Elon Musk" value={form.name} onChange={set('name')} />
+                  </div>
+                  <button className="btn primary block" disabled={busy}>
+                    {busy ? 'Creating…' : 'Claim my gold card & 100 credits'}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <div className="auth-tabs">
+                  <button type="button" className={mode === 'signin' ? 'active' : ''} onClick={() => setMode('signin')}>
+                    Log in
+                  </button>
+                  <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => setMode('signup')}>
+                    Sign up
+                  </button>
                 </div>
-              )}
-              <div className="field">
-                <label>Username</label>
-                <div className="input-prefix">
-                  <span className="pre">@</span>
-                  <input className="input" placeholder="billgates" value={form.username}
-                    onChange={set('username')} autoCapitalize="none" autoFocus />
-                </div>
-              </div>
-              <div className="field">
-                <label>Password</label>
-                <input className="input" type="password" placeholder="••••••••" value={form.password}
-                  onChange={set('password')} />
-              </div>
-              <button className="btn primary block" disabled={busy}>
-                {busy ? 'Please wait…' : mode === 'signin' ? 'Log in' : 'Create my Platinum card'}
-              </button>
-            </form>
 
-            {mode === 'signup' && (
-              <p className="faint center mt" style={{ fontSize: 12 }}>
-                Registration is free — no activation code needed. Link Google after signing in to
-                grab <span className="gold">100 free credits</span>.
-              </p>
+                <button type="button" className="google-btn" onClick={google} disabled={busy}>
+                  <GoogleIcon /> Continue with Google
+                </button>
+                <div className="divider">or {mode === 'signin' ? 'log in' : 'register'} with a username</div>
+
+                <form onSubmit={submit}>
+                  {mode === 'signup' && (
+                    <div className="field">
+                      <label>Your name</label>
+                      <input className="input" placeholder="Bill Gates" value={form.name} onChange={set('name')} />
+                    </div>
+                  )}
+                  <div className="field">
+                    <label>Username</label>
+                    <div className="input-prefix">
+                      <span className="pre">@</span>
+                      <input className="input" placeholder="billgates" value={form.username}
+                        onChange={set('username')} autoCapitalize="none" autoFocus />
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label>Password</label>
+                    <input className="input" type="password" placeholder="••••••••" value={form.password}
+                      onChange={set('password')} />
+                  </div>
+                  <button className="btn primary block" disabled={busy}>
+                    {busy ? 'Please wait…' : mode === 'signin' ? 'Log in' : 'Create my gold card'}
+                  </button>
+                </form>
+
+                {mode === 'signup' ? (
+                  <p className="auth-footnote">
+                    Free registration — no activation code. Link Google after signing in to grab{' '}
+                    <span className="gold">100 free credits</span>.
+                  </p>
+                ) : (
+                  <p className="auth-footnote">
+                    New here?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setMode('signup')}
+                      style={{ background: 'none', border: 'none', color: 'var(--gold)', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                    >
+                      Create a free account
+                    </button>
+                  </p>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

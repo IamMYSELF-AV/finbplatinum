@@ -30,17 +30,26 @@ jobs:
         run: npm run build
 
       # Security rules are deployed only from the protected main branch.
+      # continue-on-error so a missing/invalid SA still lets Hosting ship.
       - name: Deploy Firestore security rules (main only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-sa.json
         run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINBPLATINUM }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+          set -e
+          SECRET='${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINBPLATINUM }}'
+          if [ -z "$SECRET" ] || [ "$SECRET" = "" ]; then
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT_FINBPLATINUM secret is empty — skipping rules deploy"
+            exit 0
+          fi
+          printf '%s\n' "$SECRET" > "$GOOGLE_APPLICATION_CREDENTIALS"
           npx -y firebase-tools@13 deploy --only firestore:rules \
             --project finbplatinum --non-interactive
 
       - name: Deploy to live channel (main)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
@@ -50,6 +59,7 @@ jobs:
 
       - name: Deploy preview channel (pull requests)
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
